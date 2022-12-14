@@ -10,8 +10,9 @@ app.get('/', (req, res) => {
     req.status(201).send(`<h1>Tes</>`)
 })
 
-const {usersRouter} = require('./routers')
+const {usersRouter, moviesRouter} = require('./routers')
 app.use('/users', usersRouter)
+app.use('/movies', moviesRouter)
 
 
 
