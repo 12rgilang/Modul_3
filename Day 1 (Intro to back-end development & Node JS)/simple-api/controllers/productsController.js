@@ -37,7 +37,6 @@ module.exports = {
     // step3. read data dari db.json
     let getData = JSON.parse(fs.readFileSync('./db/db.json'))
     // step.4 Manipulsai data
-    let idx = null
     getData.products.forEach((value, index) => {
         if(value.id === id){
             value.name = body.name
