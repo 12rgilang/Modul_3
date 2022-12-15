@@ -1,0 +1,6 @@
+{
+    "expenses":[
+        {"id":1,"name":"Bensin","nominal":10000,"category":"Transportasi","date":"2022-12-01"},
+        {"id":2,"name":"Jajan","nominal":100000,"category":"Hiburan","date":"2022-12-02"}
+    ]
+}
