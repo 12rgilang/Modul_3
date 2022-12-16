@@ -5,7 +5,7 @@ app.use(express.json())
 const PORT = 5003
 
 app.get('/', (req, res) => {
-    req.status(201).send(`<h1>Tes</>`)
+    res.status(201).send(`<h1>Tes</>`)
 })
 
 // Import Router
