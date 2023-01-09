@@ -10,6 +10,12 @@ const db = require('./../models/index')
 const users = db.users
 const users_address = db.users_address
 
+// impoort hashing
+const {hashPassword,hashMatch} = require('./../library/hashPassword')
+
+// import webToken
+const {webToken} = require('./../library/webToken')
+
 module.exports = {
     register: async(req, res) => {
         // To rollback transactions
@@ -44,7 +50,7 @@ module.exports = {
         }
 
         // step.4 simpan data kedalam database
-        let resCreateUsers = await users.create({id: uuidv4(), username, email, password})
+        let resCreateUsers = await users.create({id: uuidv4(), username, email, password: await hashPassword(password)}, {transaction: t})
         console.log(resCreateUsers.dataValues.id)
 
         await users_address.create({receiver: 'gilang', address: 'Tangerang', phone_number: 62, users_id: resCreateUsers.dataValues.id}, {transaction: t})

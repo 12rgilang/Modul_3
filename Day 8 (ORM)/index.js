@@ -10,9 +10,10 @@ app.get('/', (req, res) => {
     req.statusCode(201).send(`<h2> wakwaw </h2>`)
 })
 
-const {transactionRouter} = require('./routers')
-const {usersRouter} = require('./routers')
+// const {transactionRouter} = require('./routers')
+const {usersRouter, productsRouter} = require('./routers')
 app.use('/users', usersRouter)
+app.use('/products', productsRouter)
 // app.use('/product', transactionRouter)
 
 
