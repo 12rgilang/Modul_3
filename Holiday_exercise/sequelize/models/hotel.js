@@ -18,7 +18,6 @@ module.exports = (sequelize, DataTypes) => {
   hotel.init({
     name: DataTypes.STRING,
     location: DataTypes.STRING,
-    availableRoom: DataTypes.INTEGER
   }, {
     sequelize,
     modelName: 'hotel',

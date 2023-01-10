@@ -1,45 +1,77 @@
 // import Sequelize
+const {sequelize} = require('../sequelize/models')
 const db = require('../sequelize/models')
 const { Op } = require('sequelize')
 
+// generate UID
+const { v4: uuidv4 }= require('uuid');
+
+// import web token
+const {createToken} = require('./../library/webToken')
+
+// import hsashing password
+const {hashPassword, hashMatch} = require('./../library/hashPassword')
+
+
 module.exports = {
     signUp: async (req, res) => {
-        let { username, email, password, role} = req.body;
+        const t = await sequelize.transaction()
         try {
-            await db.user.create({username, email, password, role});
-            return res.status(201).send({
-                isError: false,
-                message: "Register Success",
-                data: null,
+            // Step-1 Ngambil value req.body
+            let {username, email, password, role} = req.body
+
+            // Step-2
+            await db.user.create({
+                username, email, password: await hashPassword(password), role
             })
+            // Step-3
+            res.status(201).send({
+                isError: false, 
+                message: 'Register Success',
+                data: null
+            })
+
         } catch (error) {
-            return res.status(400).send({
-                isError: true,
-                message: "Something went wrong",
-                data: error,
+            res.status(404).send({
+                isError: true, 
+                message: error.errors[0].message,
+                data: null
             })
         }
     },
 
     signIn: async(req, res) => {
-        let { username, password} = req.query 
+        let { usernameOrEmail, password} = req.query 
         try {
             let response = await db.user.findOne({
                 where: {
-                    [Op.and]: [{username}, {password}],
+                    [Op.or]: [{username: usernameOrEmail}, {email: usernameOrEmail}],
                 },
-            });
-            return res.status(200).send({
+            })
+            
+            if(!response) return res.status(404).send({
+                isError: true,
+                message: "Username and email not found",
+                data: null
+            })
+
+            let hashMatchResult = await hashMatch(password, response.password)
+
+
+            if(hashMatchResult === false ) return res.status(404).send({
+                isError: true,
+                message: "Password not Found",
+                data: null,
+            })
+            
+            // step.3 kirim response
+            return res.status(201).send({
                 isError: false,
                 message: "Login Success",
-                data: { token: response.uuid},
+                data: { token: createToken({id: response.uuid})},
             })
         } catch (error) {
-            return res.status(400).send({
-                isError: true,
-                message: "Username/password not Found",
-                data: error,
-            })
+            console.log(error)
             
         }
     }

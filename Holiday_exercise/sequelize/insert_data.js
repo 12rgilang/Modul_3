@@ -9,22 +9,17 @@ sequelize
 		// create data in hotel
 		db.hotel.bulkCreate([
 			{
-				name: "hotel 1",
-				location: "location 1",
-				price: 300000,
-				availableRoom: 1,
+				name: "Hotel ibis",
+				location: "Tangerang",
+				
 			},
 			{
-				name: "hotel 2",
-				location: "location 1",
-				price: 400000,
-				availableRoom: 2,
+				name: "Hotel JHL",
+				location: "Serpong",
 			},
 			{
-				name: "hotel 3",
-				location: "location 2",
-				price: 500000,
-				availableRoom: 3,
+				name: "Hotel episode",
+				location: "BSD",
 			},
 		]);
 	})
@@ -46,52 +41,87 @@ sequelize
 		// insert data room
 		return db.room.bulkCreate([
 			{
-				type: "single bed hotel 1",
+				name: "single bed hotel 1",
 				price: 300000,
 				hotel_id: 1,
+				available_Room: 20,
 			},
 			{
-				type: "twin bed hotel 1",
+				name: "twin bed hotel 1",
 				price: 400000,
 				hotel_id: 1,
+				available_Room: 25,
 			},
 			{
-				type: "suite hotel 1",
+				name: "suite hotel 1",
 				price: 600000,
 				hotel_id: 1,
+				available_Room: 20,
 			},
 			{
-				type: "single bed hotel 2",
+				name: "single bed hotel 2",
 				price: 400000,
 				hotel_id: 2,
+				available_Room: 10,
 			},
 			{
-				type: "twin bed hotel 2",
+				name: "twin bed hotel 2",
 				price: 500000,
 				hotel_id: 2,
+				available_Room: 15,
 			},
 			{
-				type: "suite hotel 2",
+				name: "suite hotel 2",
 				price: 800000,
 				hotel_id: 2,
+				available_Room: 12,
 			},
 			{
-				type: "single bed hotel 3",
+				name: "single bed hotel 3",
 				price: 500000,
 				hotel_id: 3,
+				available_Room: 20,
 			},
 			{
-				type: "twin bed hotel 3",
+				name: "twin bed hotel 3",
 				price: 600000,
 				hotel_id: 3,
+				available_Room: 20,
 			},
 			{
-				type: "suite hotel 3",
+				name: "suite hotel 3",
 				price: 1000000,
 				hotel_id: 3,
+				available_Room: 20,
 			},
 		]);
 	})
+	.then((data) => {
+		// insert data room
+		return db.transaction.bulkCreate([
+			{
+				hotel_name:"Hotel JHL",
+				hotel_location:"Serpong",
+				room_name:"deluxe garden",
+				price:3000000,
+				total_room:2,
+				checkin:"2022-12-20 14:00:00",
+				checkout:"2022-12-21 12:00:00",
+				status:"paid",
+			},
+			{
+				hotel_name:"Hotel ibis",
+				hotel_location:"Tangerang",
+				room_name:"deluxe garden",
+				price:3000000,
+				total_room:2,
+				checkin:"2022-12-20 14:00:00",
+				checkout:"2022-12-21 12:00:00",
+				status:"paid",
+			}
+		]);
+	})
+
 	.then((data) => {
 		// insert data room
 		return db.room_image.bulkCreate([

@@ -42,10 +42,12 @@ module.exports = (sequelize, DataTypes) => {
     password: {
       type: DataTypes.STRING,
       allowNullL: false,
-      is: {
-        args: /^(?=.*[0-9])(?=.*[a-zA-Z])([a-zA-Z0-9]+)$/,
-        msg: "email must contain @ and contain at least 10 char"
-      },
+      // validate: {
+      //   is: {
+      //     args: /^(?=.[0-9])(?=.[a-zA-Z])([a-zA-Z0-9]+){6,10}$/,
+      //     msg: "Password must between 6 to 10 characters and contain a number"
+      //   }
+      // },
       notEmpty: {msg: "User password must not be empty"},
       notNull: {msg: "User must have a password"},
     },
