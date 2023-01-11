@@ -1,8 +1,12 @@
 const express = require("express")
 const Router = express.Router()
 
+// Import Controller
 const {productsController} = require("../controller")
 
-Router.post("upload", productsController.uploadFile)
+// import Upload
+const upload = require('./../middleware/upload')
+
+Router.post("/upload", upload, productsController.uploadFile)
 
 module.exports = Router;
