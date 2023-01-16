@@ -21,7 +21,7 @@ module.exports = {
             let dataToUpload = JSON.parse(req.body.data)
             console.log(dataToUpload)
             // step 2 insert data to Products
-            let postProducts = await products.create(dataToUpload, {transaction: t})
+            let postProducts = await products.create({...dataToUpload, main_image: req.files.images[0].path}, {transaction: t})
             let products_id = postProducts.dataValues.id
 
             // step 3 insert data to Products_Images
@@ -121,21 +121,47 @@ module.exports = {
                 where: {
                     id: products_images_id
                 },
+                include: [{
+                    model: products,
+                    attribute: 'main_image'
+                }],
                 transaction: t
             })
+
+            let products_id = findOldPathImage.dataValues.products_id
 
             if(!findOldPathImage) throw {message: 'Image Id Not Found'}
 
             let pathToDelete = []
             pathToDelete.push(findOldPathImage)
 
-            // Step 3 Update image path yang lama dengan image path terbarunya
+            if(findOldPathImage.dataValues.path === findOldPathImage.dataValues.product.dataValues.main_image){
+                await products_images.update(
+                    {path: req.files.images[0].path},
+                    {where: {
+                        id: products_images_id
+                    }}
+                ), {transaction: t}
+
+                await products.update({
+                    main_image: req.files.images[0].path
+                },
+                {
+                    where: {
+                        id: products_id
+                    }
+                },
+                {transaction: t})
+            }else{
+                // Step 3 Update image path yang lama dengan image path terbarunya
             await products_images.update(
                 {path: req.files.images[0].path}, {
                     where: {
                         id: products_images_id
                     }
                 }, {transaction: t})
+            }
+
 
                 // Step 4 Delete image file yang lama
                 deleteFiles({images: pathToDelete})

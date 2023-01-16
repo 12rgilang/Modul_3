@@ -14,7 +14,15 @@ const users_address = db.users_address
 const {hashPassword,hashMatch} = require('./../library/hashPassword')
 
 // import webToken
-const {webToken} = require('./../library/webToken')
+const {webToken, createToken} = require('./../library/webToken');
+
+// import transporter
+const transporter  = require('../helpers/transporter');
+const handlebars = require('handlebars')
+const client = require('./../connection/rconn')
+const axios = require('axios')
+
+const fs = require('fs').promises;
 
 module.exports = {
     register: async(req, res) => {
@@ -55,52 +63,139 @@ module.exports = {
 
         await users_address.create({receiver: 'gilang', address: 'Tangerang', phone_number: 62, users_id: resCreateUsers.dataValues.id}, {transaction: t})
 
+        // step. 4.1 
+        const template = await fs.readFile('./template/confirmation.html', 'utf-8') //kolom kedua untuk tipe file 'utf-8'
+        const templateCompile = await handlebars.compile(template)
+        const newTemplate = templateCompile({username, url:`http:localhost:3000/activation/${resCreateUsers.dataValues.id}` })
+        await transporter.sendMail({
+            from: 'Starbucks',
+            to: email,
+            subject: 'Account Activation',
+            html: newTemplate
+        })
+
         // step.5 kirim response
         await t.commit()
         res.status(201).send({
             isError: false,
-            message : "Register Data Success",
+            message : "Register Success",
             data: null
         })
         
        } catch (error) {
+           await t.rollback()
            console.log(error)
        }
 
     },
 
     Login: async(req, res) => {
-        try {
-            // Step1. 
+            // Step1. ambil value dari req.body
             let {username, password} = req.body
 
-            if(!username.length && !password.length)
+            // Step.2 Cari username dan password di database
+            let findUsernameAndPassword = await users.findOne({
+                where: {
+                    username
+                }
+            })
+
+            
+            if(!findUsernameAndPassword){
+                return res.status(401).send({
+                    isError: true,
+                    message: 'Username Not Found',
+                    data: null
+                })
+            }
+
+            let matchPassword = await hashMatch(password, findUsernameAndPassword.password)
+            if(matchPassword === false ) 
             return res.status(404).send({
                 isError: true,
-                message: 'Data Not Found',
+                message: 'Password Not Found',
                 data: null
             })
 
+            const token = createToken({id: findUsernameAndPassword.id, username: findUsernameAndPassword.username})
 
-            let findUsernameAndPassword = await users.findOne({
-                where: {
-                    [Op.and]: [
-                        {username: username},
-                        {password: password}
-                    ]
-                }
+            res.status(201).send({
+                isError: false,
+                message: 'Login Success',
+                data: {token, username: findUsernameAndPassword.dataValues.username}
             })
-            console.log(findUsernameAndPassword)
-            
-            if(findUsernameAndPassword){
-                return res.status(201).send({
-                    isError: false,
-                    message: 'Login success',
-                    data: {id: findUsernameAndPassword.dataValues.id, username: findUsernameAndPassword.dataValues.username}
-                })
-            }
+
+    },
+
+    keepLogin: (req, res) => {
+        try {
+            console.log(req.dataToken)
+
+            // get data by user by id
+            res.status(201).send({
+                isError: false,
+                message: 'Token Valid',
+                data: req.dataToken.username
+            })
         } catch (error) {
             
+        }
+    },
+    
+    activation: async(req, res) => {
+        try {
+            // step.1 ambil data dauri query
+            let {id} = req.param.id
+            
+            // step.2 patch data
+            let findActivation = await users.update(
+                {status: "Confirmed"},
+                {where:
+                {
+                    id
+                }}
+            )
+            // step.3 kirim respon
+            res.status(201).send({
+                isError: false,
+                message: "Activation Success!",
+                data: null
+            })
+        } catch (error) {
+            res.status(404).send({
+                error: true,
+                message: error.message ,
+                data: null
+            })
+        }
+    },
+
+    getWithRedis: async(req, res) => {
+        try {
+            let {breed} = req.params
+
+            let dataFromRedis = await client.get('dogs');
+            dataFromRedis = JSON.parse(dataFromRedis)
+
+            if(dataFromRedis.message.length){
+                return res.status(201).send({
+                    isError: false,
+                    message: 'Get DAta From API SUcces!',
+                    data: dataFromRedis.message
+                })
+            }
+
+            let {data} = await axios.get(`http://dog.ceo/api/breed/${breed}/images`)
+
+            client.setex('dogs', 10000, JSON.stringify(data))
+
+            res.status(201).send({
+                isError: false,
+                message: 'GEt Data From API Success!',
+                data: data
+            })
+        } catch (error) {
+            console.log(error)
         }
     }
 }
