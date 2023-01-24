@@ -1,15 +1,25 @@
+'use strict';
+const {
+  Model
+} = require('sequelize');
 module.exports = (sequelize, DataTypes) => {
-  const size = sequelize.define('size', {
-    name: DataTypes.STRING
-  }, {});
-
-  size.associate = function(models){
-    // Assocations define here
-    size.belongsToMany(models.products_detail, {
-      through: 'products_size'
-    })
+  class size extends Model {
+    /**
+     * Helper method for defining associations.
+     * This method is not a part of Sequelize lifecycle.
+     * The `models/index` file will call this method automatically.
+     */
+    static associate({products_details}) {
+        this.hasMany(products_details, {foreignKey: "size_id"})
+    }
   }
-
-  return size
-}
-    
+  size.init({
+    name: DataTypes.STRING
+  }, {
+    sequelize,
+    modelName: 'size',
+    freezeTableName: true,
+    timestamps: false
+  });
+  return size;
+};

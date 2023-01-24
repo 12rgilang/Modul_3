@@ -1,16 +1,26 @@
-
-
+'use strict';
+const {
+  Model
+} = require('sequelize');
 module.exports = (sequelize, DataTypes) => {
-  const topping = sequelize.define('topping', {
-    name: DataTypes.STRING
-  }, {});
-
-  topping.associate = function(models){
-    // Assocations define here
-    topping.belongsToMany(models.products_detail, {
-      through: 'products_topping'
-    })
+  class topping extends Model {
+    /**
+     * Helper method for defining associations.
+     * This method is not a part of Sequelize lifecycle.
+     * The `models/index` file will call this method automatically.
+     */
+    static associate({products_details}) {
+      // define association here
+      this.belongsTo(products_details)
+    }
   }
-
-  return topping
-}
+  topping.init({
+    name: DataTypes.STRING
+  }, {
+    sequelize,
+    modelName: 'topping',
+    freezeTableName: true,
+    timestamps: false
+  });
+  return topping;
+};

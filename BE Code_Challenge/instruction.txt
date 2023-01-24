@@ -1,0 +1,6 @@
+1. npm init -y
+2. npm i mysql2 express sequelize sequelize-cli cors bcrypt jsonwebtoken handlebars axios multer nodemailer moment env
+3. database design
+4. init sequelize
+5. model create, sync, alteration
+6. Controllers(and index) --> business logic, routers(and index), main index (hashing(bcrypt), encryption(jwt), upload file(multer), autoemailer(nodemailer))

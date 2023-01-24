@@ -1,8 +1,26 @@
+'use strict';
+const {
+  Model
+} = require('sequelize');
 module.exports = (sequelize, DataTypes) => {
-  const sugar = sequelize.define('sugar', {
+  class sugar extends Model {
+    /**
+     * Helper method for defining associations.
+     * This method is not a part of Sequelize lifecycle.
+     * The `models/index` file will call this method automatically.
+     */
+    static associate() {
+      // define association here
+      
+    }
+  }
+  sugar.init({
     name: DataTypes.STRING
-  }, {});
-
-  return sugar
-}
-  
+  }, {
+    sequelize,
+    modelName: 'sugar',
+    freezeTableName: true,
+    timestamps: false
+  });
+  return sugar;
+};

@@ -19,7 +19,7 @@ const {webToken, createToken} = require('./../library/webToken');
 // import transporter
 const transporter  = require('../helpers/transporter');
 const handlebars = require('handlebars')
-const client = require('./../connection/rconn')
+// const client = require('./../connection/rconn')
 const axios = require('axios')
 
 const fs = require('fs').promises;
@@ -30,7 +30,7 @@ module.exports = {
         const t = await sequelize.transaction()
        try {
             // step.1 Ambil data dari req.body
-        let {username, email, password} = req.body
+        let {id, username, email, password} = req.body
 
         // Step2. Validasi inputan users
         if(!username.length || !email.length || !password.length) 
@@ -49,6 +49,7 @@ module.exports = {
                 ]
             }
         }, {transaction: t})
+
         if(findUsernameAndEmail){
             return res.status(404).send({
                 isError: true,
@@ -58,15 +59,15 @@ module.exports = {
         }
 
         // step.4 simpan data kedalam database
-        let resCreateUsers = await users.create({id: uuidv4(), username, email, password: await hashPassword(password)}, {transaction: t})
+        let resCreateUsers = await users.create({username, email, password: await hashPassword(password)}, {transaction: t})
         console.log(resCreateUsers.dataValues.id)
 
-        await users_address.create({receiver: 'gilang', address: 'Tangerang', phone_number: 62, users_id: resCreateUsers.dataValues.id}, {transaction: t})
+        // await users_address.create({receiver: null, address: null, phone_number: null, users_id: resCreateUsers.dataValues.id}, {transaction: t})
 
         // step. 4.1 
         const template = await fs.readFile('./template/confirmation.html', 'utf-8') //kolom kedua untuk tipe file 'utf-8'
         const templateCompile = await handlebars.compile(template)
-        const newTemplate = templateCompile({username, url:`http:localhost:3000/activation/${resCreateUsers.dataValues.id}` })
+        const newTemplate = templateCompile({username, url:`http://localhost:3000/activation/${resCreateUsers.dataValues.id}` })
         await transporter.sendMail({
             from: 'Starbucks',
             to: email,
@@ -84,16 +85,21 @@ module.exports = {
         
        } catch (error) {
            await t.rollback()
-           console.log(error)
+           res.status(404).send({
+               isError: true,
+               message: error.message,
+               data: null
+           })
        }
 
     },
-
+    
     Login: async(req, res) => {
             // Step1. ambil value dari req.body
             let {username, password} = req.body
 
-            // Step.2 Cari username dan password di database
+            try {
+                // Step.2 Cari username dan password di database
             let findUsernameAndPassword = await users.findOne({
                 where: {
                     username
@@ -117,85 +123,133 @@ module.exports = {
                 data: null
             })
 
-            const token = createToken({id: findUsernameAndPassword.id, username: findUsernameAndPassword.username})
-
+    
             res.status(201).send({
                 isError: false,
                 message: 'Login Success',
-                data: {token, username: findUsernameAndPassword.dataValues.username}
+                data: {findUsernameAndPassword, token: createToken({id: findUsernameAndPassword.id})}
             })
+                
+            } catch (error) {
+                res.status(404).send({
+                    isError: true,
+                    message: error.message,
+                    data: null
+                })
+            }
 
     },
 
     keepLogin: (req, res) => {
-        try {
-            console.log(req.dataToken)
+       
+            console.log(req.body)
 
             // get data by user by id
             res.status(201).send({
                 isError: false,
                 message: 'Token Valid',
-                data: req.dataToken.username
+                data: req.body
             })
-        } catch (error) {
-            
-        }
+ 
     },
-    
-    activation: async(req, res) => {
+
+    deleteUser: async(req, res) => {
+        const t = await sequelize.transaction()
         try {
-            // step.1 ambil data dauri query
-            let {id} = req.param.id
-            
-            // step.2 patch data
-            let findActivation = await users.update(
-                {status: "Confirmed"},
-                {where:
-                {
+            let id = parseInt(req.params.users_id)
+
+            let findAllUser = await users.findAll({
+                where: {
                     id
-                }}
-            )
-            // step.3 kirim respon
-            res.status(201).send({
-                isError: false,
-                message: "Activation Success!",
-                data: null
+                },
+                transaction: t
             })
-        } catch (error) {
-            res.status(404).send({
-                error: true,
-                message: error.message ,
-                data: null
+
+           let userDelete =  await users.destroy({
+                where: {
+                    id
+                },
+                transaction: t
             })
-        }
-    },
 
-    getWithRedis: async(req, res) => {
-        try {
-            let {breed} = req.params
-
-            let dataFromRedis = await client.get('dogs');
-            dataFromRedis = JSON.parse(dataFromRedis)
-
-            if(dataFromRedis.message.length){
-                return res.status(201).send({
+            await t.commit()
+            if(userDelete){
+                res.status(201).send({
                     isError: false,
-                    message: 'Get DAta From API SUcces!',
-                    data: dataFromRedis.message
+                    message: 'Delete user Succes!',
+                    data: null
+                })
+            }else {
+                res.status(404).send({
+                    isError: true,
+                    message: 'User not Found',
+                    data: null
                 })
             }
-
-            let {data} = await axios.get(`http://dog.ceo/api/breed/${breed}/images`)
-
-            client.setex('dogs', 10000, JSON.stringify(data))
-
-            res.status(201).send({
-                isError: false,
-                message: 'GEt Data From API Success!',
-                data: data
-            })
         } catch (error) {
-            console.log(error)
+            await t.rollback()
+            res.status(404).send({
+                isError: true,
+                message: error.message,
+                data: null
+            })  
         }
     }
+    
+    // activation: async(req, res) => {
+    //     try {
+    //         // step.1 ambil data dauri query
+    //         let id = req.params.id
+            
+    //         // step.2 patch data
+    //         await users.update(
+    //             {status: "Confirmed"},
+    //             {where:
+                
+    //                 {id}
+    //             }
+    //         )
+    //         // step.3 kirim respon
+    //         res.status(201).send({
+    //             isError: false,
+    //             message: "Activation Success!",
+    //             data: null
+    //         })
+    //     } catch (error) {
+    //         res.status(404).send({
+    //             error: true,
+    //             message: error.message ,
+    //             data: null
+    //         })
+    //     }
+    // },
+
+    // getWithRedis: async(req, res) => {
+    //     try {
+    //         let {breed} = req.params
+
+    //         let dataFromRedis = await client.get('dogs');
+    //         dataFromRedis = JSON.parse(dataFromRedis)
+
+    //         if(dataFromRedis.message.length){
+    //             return res.status(201).send({
+    //                 isError: false,
+    //                 message: 'Get DAta From API SUcces!',
+    //                 data: dataFromRedis.message
+    //             })
+    //         }
+
+    //         let {data} = await axios.get(`http://dog.ceo/api/breed/${breed}/images`)
+
+    //         client.setex('dogs', 10000, JSON.stringify(data))
+
+    //         res.status(201).send({
+    //             isError: false,
+    //             message: 'GEt Data From API Success!',
+    //             data: data
+    //         })
+    //     } catch (error) {
+    //         console.log(error)
+    //     }
+    // }
 }

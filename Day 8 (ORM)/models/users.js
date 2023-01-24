@@ -1,26 +1,61 @@
+'use strict';
+const {
+  Model, UUIDV4
+} = require('sequelize');
 module.exports = (sequelize, DataTypes) => {
-  const users = sequelize.define('users', {
-    id: {
-      allowNull: false,
-      primaryKey: true,
-      type: DataTypes.UUID
+  class users extends Model {
+    /**
+     * Helper method for defining associations.
+     * This method is not a part of Sequelize lifecycle.
+     * The `models/index` file will call this method automatically.
+     */
+    static associate({users_details}) {
+      this.hasMany(users_details, {foreignKey: "user_id"})
+    }
+  }
+  users.init({
+    uuid: {
+      type: DataTypes.UUID,
+      defaultValue: UUIDV4
     },
-    username: DataTypes.STRING,
-    email: DataTypes.STRING,
-    password: DataTypes.STRING,
+    username: {
+      type: DataTypes.STRING,
+      unique: {msg: "Username already been used"},
+      allowNull: false,
+      validate: {
+        notEmpty: {msg: "Field cannot blank"},
+        notNull: {msg: "Field cannot blank"}
+      }
+    },
+    email: {
+      type: DataTypes.STRING,
+      unique: {msg: "Email already registered"},
+      allowNull: false,
+      validate: {
+        isEmail: {msg: "Enter a valid email address"},
+        notEmpty: {msg: "Field cannot blank"},
+        notNull: {msg: "User must be have an email"}
+      }
+    },
+    password: {
+      type: DataTypes.STRING(64),
+      allowNull: false,
+      notEmpty: {msg: "Field cannot blank"},
+      notNull: {msg: "Field cannot blank"}
+    },
     status: {
       type: DataTypes.STRING,
-      defaultValue: 'Unconfirmed'
-    }
-  }, {});
-
-  users.associate = function(models){
-    // Assocations define here
-    users.hasMany(models.users_address, {
-      foreignKey: 'users_id'
-    })
+      defaultValue: "UnConfirmed"
+    },
+    role: {
+      type: DataTypes.STRING,
+      allowNull: false,
+      defaultValue: "User"
   }
-
-  return users
-}
-  
+  }, {
+    sequelize,
+    modelName: 'users',
+    freezeTableName: true
+  });
+  return users;
+};

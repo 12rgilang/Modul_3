@@ -2,7 +2,7 @@
   "development": {
     "username": "root",
     "password": "jcwd2302",
-    "database": "holiday_exercise",
+    "database": "database_development",
     "host": "127.0.0.1",
     "dialect": "mysql"
   },

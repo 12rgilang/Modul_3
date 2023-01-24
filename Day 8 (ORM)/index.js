@@ -4,7 +4,7 @@ app.use(express.json())  // Body Parser: Mengambil data yang dikirimkan oleh cli
 const cors = require('cors')
 app.use(cors())
 
-const PORT = 7000
+const PORT = 2023
 const Sequelize = require('sequelize');
 const Models = require('./models');
 
